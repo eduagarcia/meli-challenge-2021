@@ -22,6 +22,9 @@ def create_features_per_sku(df_sku):
     new_row['date_first'] = df['datetime'].iloc[0]
     new_row['date_last'] = df['datetime'].iloc[-1]
     new_row['date_diff'] = (new_row['date_last'] - new_row['date_first']).days
+    for date in ['date_first', 'date_last']:
+        new_row[date+'_day'] = new_row[date].day
+        new_row[date+'_month'] = new_row[date].month
 
     for quantity in ['sold_quantity', 'current_price', 'minutes_active']:
         new_row[quantity+'_first'] = df[quantity].iloc[0]
@@ -40,6 +43,8 @@ def create_features_per_sku(df_sku):
         new_row[category+'_mode'] = df[category].mode().iloc[0]
         new_row[category+'_mode_tx'] = df[category].value_counts().iloc[0]/new_row['count']
 
+    new_row['minutes_active_series'] = df['sold_quantity'].to_json(orient='values')
+    new_row['current_price_series'] = df['sold_quantity'].to_json(orient='values')
     new_row['sold_quantity_series'] = df['sold_quantity'].to_json(orient='values')
     return new_row
 
@@ -48,6 +53,7 @@ def extract_features_per_sku(data_train, data_items, n_workers=100):
     df = read_df(data_train)
     df_item = read_df(data_items)
     
+    df = df.sort_values(['sku', 'date']).reset_index(drop=True)
     df_first_entry = df[df['sku'].diff() != 0]
     
     sku_split = []
@@ -74,6 +80,8 @@ def extract_features_per_sku(data_train, data_items, n_workers=100):
         df_sku[category] = df_sku[category].astype("category")
     
     df_sku['item_title'] = df_sku['item_title'].astype(str)
+    df_sku['minutes_active_series'] = df_sku['minutes_active_series'].astype(str)
+    df_sku['current_price_series'] = df_sku['current_price_series'].astype(str)
     df_sku['sold_quantity_series'] = df_sku['sold_quantity_series'].astype(str)
     
     return df_sku

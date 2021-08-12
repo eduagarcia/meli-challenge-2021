@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import json
+from shutil import copyfile
 from datetime import datetime
 
 import numpy as np
@@ -20,9 +21,18 @@ TEST_DATA_FILENAME = 'test_data.csv'
 GROUND_TRUTH_FILENAME = 'test_ground_truth.npy'
 TRAIN_DATA_FILENAME = 'train_data.parquet'
 TRAIN_DATA_PROCESSED_FILENAME = 'train_sku_feature_data.parquet'
+ITEM_DATA_FILEPATH = './dataset/items_static_metadata_full.jl'
 
 def save_results(data):
     logger_file = 'predictions.csv'
+    
+    if not os.path.exists('./models/hist'):
+        os.makedirs('./models/hist')
+    
+    model_file = os.path.join('./models', f"{data['model_name']}.py")
+    out_model_file = os.path.join('./models/hist', f"{data['model_name']}-predict-{data['unix_time']}.py")
+    
+    copyfile(model_file, out_model_file)
     
     if not os.path.exists(logger_file):
         df = pd.DataFrame([data])
@@ -42,24 +52,26 @@ def train_and_evaluate(model_name, dataset_indexes, save_result=True):
         start_time = time.time()
 
         dataset_current_path = os.path.join(DATASET_PATH, str(dataset_index))
-
+        
         test_data_filepath = os.path.join(dataset_current_path, TEST_DATA_FILENAME)
         ground_truth_filepath = os.path.join(dataset_current_path, GROUND_TRUTH_FILENAME)
-        train_data_filepath = os.path.join(dataset_current_path, TRAIN_DATA_FILENAME)
-        train_data_processed_filepath = os.path.join(dataset_current_path, TRAIN_DATA_PROCESSED_FILENAME)
+        #train_data_filepath = os.path.join(dataset_current_path, TRAIN_DATA_FILENAME)
+        #train_data_processed_filepath = os.path.join(dataset_current_path, TRAIN_DATA_PROCESSED_FILENAME)
 
         logger.info(f"Loading dataset {dataset_current_path}...")
-
+        
+        
         df_test = read_df(test_data_filepath)
         ground_truth = read_numpy(ground_truth_filepath)
-        df_train = read_df(train_data_filepath)
-        df_train_processed = read_df(train_data_processed_filepath)
+        #df_item = read_df(ITEM_DATA_FILEPATH)
+        #df_train = read_df(train_data_filepath)
+        #df_train_processed = read_df(train_data_processed_filepath)
 
         time_data.append(time.time() - start_time)
 
         logger.info(f"Initiating strategy {model_name} on dataset {dataset_current_path}")
 
-        strategy = models[model_name](df_train, df_train_processed)
+        strategy = models[model_name](dataset_current_path)
 
         time_data.append(time.time() - start_time - sum(time_data))
 
@@ -99,9 +111,12 @@ def train_and_evaluate(model_name, dataset_indexes, save_result=True):
         all_times_mean += np.array(time_data)
     all_times_mean = all_times_mean/len(all_times)
     
+    date_end = datetime.now()
+    
     data = {
+        'unix_time': int(time.mktime(date_end.timetuple())),
         'date_start': date_start,
-        'date_end': datetime.now(),
+        'date_end': date_end,
         'model_name': model_name,
         'dataset': DATASET_PATH,
         'dataset_indexes': json.dumps(dataset_indexes),
@@ -119,5 +134,5 @@ def train_and_evaluate(model_name, dataset_indexes, save_result=True):
 if __name__ == "__main__":
     #dateset_indexes = [0, 1, 2, 3]
     dateset_indexes = [0]
-    model_name = 'voted_shifted_padded_gaussian_probs'
+    model_name = sys.argv[-1]
     train_and_evaluate(model_name, dateset_indexes)

@@ -35,8 +35,12 @@ def simple_first_30_days_fixed_spike(data):
 class SimpleFirst30DaysFixedSpike(Model):
     model_name = 'simple_first_30_days_fixed_spike'
     
-    def __init__(self, df_train, df_train_processed):
-        Model.__init__(self, self.model_name, df_train, df_train_processed)
+    def __init__(self, dataset_path):
+        Model.__init__(self, self.model_name, dataset_path)
+        
+    def prepare_data(self):
+        self.df_train_processed = read_df(os.path.join(self.dataset_path, self.default_paths['train_data_processed']))
+        self.prepared_dataset = self.df_train_processed
         
     def predict(self, df_test):
         global df_train_v1

@@ -1,9 +1,17 @@
 from models.uniform import Uniform
 from models.simple_first_30_days_fixed_spike import SimpleFirst30DaysFixedSpike
 from models.voted_shifted_padded_gaussian_probs import VotedShiftedPaddedGaussianProbs
+from models.normal import Normal
+from models.tweedie import Tweedie
+from models.xgboost_v1 import XGBoostV1
+from models.xgboost_features_v1 import XGBoostFeaturesV1
 
 models = {
     "uniform": Uniform,
     "simple_first_30_days_fixed_spike": SimpleFirst30DaysFixedSpike,
     "voted_shifted_padded_gaussian_probs": VotedShiftedPaddedGaussianProbs,
+    "normal": Normal,
+    "tweedie": Tweedie,
+    "xgboost_v1": XGBoostV1,
+    "xgboost_features_v1": XGBoostFeaturesV1
 }

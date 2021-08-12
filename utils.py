@@ -16,6 +16,8 @@ def read_df(data):
             return pd.read_csv(data)
         elif extension == '.parquet':
             return pd.read_parquet(data, engine='fastparquet')
+        elif extension == '.json':
+            return pd.read_json(data)
         elif extension == '.jl' or extension == '.jsonl':
             return pd.read_json(data, lines=True)
     raise Exception('invalid data')
