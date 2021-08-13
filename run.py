@@ -107,7 +107,7 @@ def train_and_evaluate(model_name, save_result=True):
 
     sub_filepath = f'predictions/{model_name}.csv'
     df_predictions = pd.DataFrame(predictions)
-    df_predictions.to_csv(sub_filepath, index=False, header=False)
+    df_predictions.to_csv(sub_filepath, index=False, header=False, float_format='%.4f')
 
     if not os.path.exists('submissions'):
         os.mkdir('submissions')

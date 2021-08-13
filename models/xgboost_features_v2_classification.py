@@ -5,11 +5,10 @@ import pandas as pd
 
 from tqdm.auto import tqdm
 from multiprocessing import Pool
-from scipy.stats import norm
 from pandarallel import pandarallel
 pandarallel.initialize(nb_workers=50)
 
-from xgboost import XGBRegressor
+from xgboost import XGBClassifier
 
 from model import Model
 from utils import read_df
@@ -70,28 +69,8 @@ for series_name in series_columns:
 
 features = numeric_columns + categorical_columns
 
-def normal_probs(data):
-    row, pred = data
-    sku = row['sku']
-    
-    days_stockout = pred+1
-    std_days = 7
-
-    dist_model = norm(days_stockout,std_days)
-
-    probalities = np.zeros(30)
-    for i in range(1, 31):
-        probalities[i-1] = (dist_model.cdf(i+1) - dist_model.cdf(i))
-
-    if probalities.sum() == 0:
-        probalities = np.ones(30) / 30
-
-    probalities = (probalities/probalities.sum()).round(4)
-    #probalities = saferound(probalities, places=4)
-    return (sku, probalities)
-
-class XGBoostFeaturesV1(Model):
-    model_name = 'xgboost_features_v1'
+class XGBoostFeaturesV2(Model):
+    model_name = 'xgboost_features_v2_classification'
     
     def __init__(self, dataset_path):
         Model.__init__(self, self.model_name, dataset_path)
@@ -166,8 +145,9 @@ class XGBoostFeaturesV1(Model):
     
     def train(self):
         X, y = self.prepared_dataset
-        self.model = XGBRegressor(n_estimators=1000, max_depth=6, learning_rate=0.1,
+        self.model = XGBClassifier(n_estimators=1000, max_depth=6, learning_rate=0.1,
                     random_state=0, tree_method='gpu_hist',
+                    objective='multi:softprob', num_class=30, use_label_encoder=False,
                     gpu_id=3)
         self.model.fit(X, y)
     
@@ -203,21 +183,8 @@ class XGBoostFeaturesV1(Model):
         X_test = test_x_df[features].values
         X_test = np.concatenate((X_test, np.reshape(df_test['target_stock'].values, (-1, 1))), axis=1)
         
-        preds = self.model.predict(X_test)
-        
-        skus = []
-        probabilities = np.zeros((len(df_test), 30))
-        i = 0
-        with Pool(100) as p:
-            for data in tqdm(p.imap(normal_probs, zip(df_test.to_dict(orient='records'), preds)), total=len(df_test)):
-                sku, probs = data
-                skus.append(sku)
-                probabilities[i] = probs
-                i += 1
-        
-        skus = np.array(skus)
-        comparison = skus == df_test['sku'].to_numpy()
-        assert comparison.all()
+        preds = self.model.predict_proba(X_test)
+        probabilities = (preds/preds.sum(axis=1)[:,None]).round(4)
         
         return probabilities
 

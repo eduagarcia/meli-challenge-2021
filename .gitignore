@@ -1,7 +1,7 @@
 predictions/
 submissions/
-model/hist/
-model/crude_outputs/
+models/hist/
+models/crude_outputs/
 predict_test_hist
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,linux,windows,macos,visualstudiocode

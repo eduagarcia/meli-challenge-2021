@@ -5,6 +5,8 @@ from models.normal import Normal
 from models.tweedie import Tweedie
 from models.xgboost_v1 import XGBoostV1
 from models.xgboost_features_v1 import XGBoostFeaturesV1
+from models.xgboost_features_v2_classification import XGBoostFeaturesV2
+from models.xgboost_features_v2_1_classification import XGBoostFeaturesV2_1
 
 models = {
     "uniform": Uniform,
@@ -13,5 +15,7 @@ models = {
     "normal": Normal,
     "tweedie": Tweedie,
     "xgboost_v1": XGBoostV1,
-    "xgboost_features_v1": XGBoostFeaturesV1
+    "xgboost_features_v1": XGBoostFeaturesV1,
+    "xgboost_features_v2_classification": XGBoostFeaturesV2,
+    "xgboost_features_v2_1_classification": XGBoostFeaturesV2_1
 }
