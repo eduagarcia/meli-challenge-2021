@@ -11,3 +11,4 @@ DATA_PATH=${1}
 #python feature_extraction.py ${DATA_PATH}/test_fromtrain_data_last29.parquet ./dataset/items_static_metadata_full.jl ${DATA_PATH}/test_fromtrain_data_last29_features.parquet
 python feature_extraction_tsfresh.py ${DATA_PATH}/train_data_x.parquet ${DATA_PATH}/train_data_x_features_tsfresh.parquet
 python feature_extraction_tsfresh.py ${DATA_PATH}/test_fromtrain_data_last29.parquet ${DATA_PATH}/test_fromtrain_data_last29_features_tsfresh.parquet
+python feature_extraction_tsfresh.py ${DATA_PATH}/train_data.parquet ${DATA_PATH}/train_data_features_tsfresh.parquet

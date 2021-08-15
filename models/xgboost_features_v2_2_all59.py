@@ -1,5 +1,5 @@
 #
-# Fix: remove sum of sold_quantity == 0 from training data
+# Predcting with all 59 days extracted features from train
 #
 
 import numpy as np
@@ -73,7 +73,7 @@ for series_name in series_columns:
 
 features = numeric_columns + categorical_columns
 
-class XGBoostFeaturesV2_1(Model):
+class XGBoostFeaturesV2_2(Model):
     model_name = 'xgboost_features_v2_1_classification'
     
     def __init__(self, dataset_path):
@@ -130,9 +130,7 @@ class XGBoostFeaturesV2_1(Model):
         #y_target_stock and y_target_date_0
         y_ts = np.zeros(len(y))
         y_td = np.zeros(len(y))
-        
-        print('before zero removal X shape', X.shape)
-        
+
         for i, t in enumerate(y):
             where_non_zero = np.where(t > 0)[0]
             if len(where_non_zero) == 0:
@@ -153,8 +151,6 @@ class XGBoostFeaturesV2_1(Model):
         X = X[not_in_sold_0_index]
         y = y[not_in_sold_0_index]
         
-        print('after zero removal X shape', X.shape)
-        
         self.prepared_dataset = (X, y)
         self.categorical_pandas_order = categorical_pandas_order
     
@@ -168,7 +164,7 @@ class XGBoostFeaturesV2_1(Model):
     
     def predict(self, df_test):
         df_test = read_df(df_test)
-        df_test_fromtrain_x_features = read_df(os.path.join(self.dataset_path, self.default_paths['test_fromtrain_data_x_processed']))
+        df_test_fromtrain_x_features = read_df(os.path.join(self.dataset_path, self.default_paths['train_data_processed']))
         
         test_x_df = df_test_fromtrain_x_features.set_index('sku').loc[df_test['sku']].reset_index().copy()
         for column in numeric_columns_composed:

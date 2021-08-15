@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import json
+from shutil import copyfile
 from datetime import datetime
 
 import numpy as np
@@ -31,6 +32,8 @@ def save_results(data):
     
     model_file = os.path.join('./models', f"{data['original_filename']}.py")
     out_model_file = os.path.join('./models/hist', f"{data['original_filename']}-submission-{data['unix_time']}.py")
+    
+    copyfile(model_file, out_model_file)
     
     if not os.path.exists(logger_file):
         df = pd.DataFrame([data])
