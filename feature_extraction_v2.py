@@ -43,8 +43,8 @@ def create_features_per_sku(df_sku):
         new_row[category+'_mode'] = df[category].mode().iloc[0]
         new_row[category+'_mode_tx'] = df[category].value_counts().iloc[0]/new_row['count']
 
-    new_row['minutes_active_series'] = df['minutes_active'].to_json(orient='values')
-    new_row['current_price_series'] = df['current_price'].to_json(orient='values')
+    new_row['minutes_active_series'] = df['sold_quantity'].to_json(orient='values')
+    new_row['current_price_series'] = df['sold_quantity'].to_json(orient='values')
     new_row['sold_quantity_series'] = df['sold_quantity'].to_json(orient='values')
     return new_row
 

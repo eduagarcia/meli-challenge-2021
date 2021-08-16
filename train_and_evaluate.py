@@ -133,6 +133,10 @@ def train_and_evaluate(model_name, dataset_indexes, save_result=True):
 
 if __name__ == "__main__":
     #dateset_indexes = [0, 1, 2, 3]
-    dateset_indexes = [0]
-    model_name = sys.argv[-1]
+    if len(sys.argv) == 2:
+        dateset_indexes = [0]
+        model_name = sys.argv[-1]
+    else:
+        dateset_indexes = [0,1,2,3]
+        model_name = sys.argv[-1]
     train_and_evaluate(model_name, dateset_indexes)

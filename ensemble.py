@@ -76,8 +76,6 @@ def ensemble(model_names, save_result=True):
         with gzip.open(gz_filepath, 'wb') as f_gz:
             f_gz.write(f_original.read())
 
-    time_data.append(time.time() - start_time - sum(time_data))
-
     data= {
         'sha256': filehash,
         'datetime': date,

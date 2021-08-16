@@ -9,7 +9,9 @@ from models.xgboost_features_v2_classification import XGBoostFeaturesV2
 from models.xgboost_features_v2_1_classification import XGBoostFeaturesV2_1
 from models.xgboost_features_v2_2_all59 import XGBoostFeaturesV2_2
 from models.xgboost_features_v3_tsfresh import XGBoostFeaturesV3
-
+from models.xgboost_features_v1_2_30models import XGBoostFeaturesV1_2
+from models.xgboost_features_v3_1_tsfresh_all import XGBoostFeaturesV3_1
+from models.xgboost_features_v3_2_tsfresh_plus_manual import XGBoostFeaturesV3_2
 
 models = {
     "uniform": Uniform,
@@ -22,5 +24,8 @@ models = {
     "xgboost_features_v2_classification": XGBoostFeaturesV2,
     "xgboost_features_v2_1_classification": XGBoostFeaturesV2_1,
     "xgboost_features_v2_2_all59": XGBoostFeaturesV2_2,
-    "xgboost_features_v3_tsfresh": XGBoostFeaturesV3
+    "xgboost_features_v3_tsfresh": XGBoostFeaturesV3,
+    "xgboost_features_v1_2_30models": XGBoostFeaturesV1_2,
+    "xgboost_features_v3_1_tsfresh_all": XGBoostFeaturesV3_1,
+    "xgboost_features_v3_2_tsfresh_plus_manual": XGBoostFeaturesV3_2,
 }

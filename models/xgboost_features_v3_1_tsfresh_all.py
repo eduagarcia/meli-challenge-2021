@@ -27,8 +27,8 @@ def impute_pool_train(column):
 def impute_pool_test(column):
     return impute(x_test_df[column].to_frame())
 
-class XGBoostFeaturesV3(Model):
-    model_name = 'xgboost_features_v3_tsfresh'
+class XGBoostFeaturesV3_1(Model):
+    model_name = 'xgboost_features_v3_1_tsfresh_all'
     
     def __init__(self, dataset_path):
         Model.__init__(self, self.model_name, dataset_path)
@@ -71,13 +71,6 @@ class XGBoostFeaturesV3(Model):
         y_ts = np.array(y_ts)
         y_td = np.array(y_td)
         
-        features = []
-        with open('dataset/tsfresh_selected_features.txt', 'r', encoding='utf8') as f:
-            for column in f:
-                features.append(column[:-1])
-                
-        x_df = x_df[features]
-        
         x_df_imputed = []
         with Pool(96) as p:
             for data in tqdm(p.imap(impute_pool_train, x_df.columns), total=len(x_df.columns)):
@@ -91,7 +84,6 @@ class XGBoostFeaturesV3(Model):
         y = y_td
         
         self.prepared_dataset = (X, y)
-        self.features = features
         
     def train(self):
         X, y = self.prepared_dataset
@@ -106,8 +98,10 @@ class XGBoostFeaturesV3(Model):
         df_test = read_df(df_test)
         df_test_fromtrain_x_features_tsfresh = read_df(os.path.join(self.dataset_path, self.default_paths['test_fromtrain_data_x_processed_tsfresh']))
         
-        x_test_df = df_test_fromtrain_x_features_tsfresh[self.features].loc[df_test['sku']].copy()
-                
+        x_test_df = df_test_fromtrain_x_features_tsfresh.loc[df_test['sku']].copy()
+        
+        X_test = np.concatenate((x_test_df.values, np.reshape(df_test['target_stock'].values, (-1, 1))), axis=1)
+        
         x_test_df_imputed = []
         with Pool(96) as p:
             for data in tqdm(p.imap(impute_pool_test, x_test_df.columns), total=len(x_test_df.columns)):
