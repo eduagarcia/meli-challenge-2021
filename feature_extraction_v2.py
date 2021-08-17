@@ -265,6 +265,9 @@ def extract_features_per_sku(data_train, data_items, n_workers=100):
     df_all['date'] = pd.to_datetime(df_all['date'])
     df_all = df_all.sort_values(['sku', 'date']).reset_index(drop=True)
     
+    for column in categorical_columns:
+        df_all[column] = df_all[column].astype(str).astype('category')
+    
     df = df_all   
     df_first_entry = df[df['sku'].diff() != 0]
     sku_split = []
