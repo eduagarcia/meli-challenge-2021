@@ -257,7 +257,6 @@ def create_features_per_item_domain_id(df):
     return new_row
 
 def extract_features_per_sku(data_train, data_items, n_workers=100):
-    global df_item
     df_train = read_df(data_train)
     df_item = read_df(data_items)
     
@@ -265,8 +264,8 @@ def extract_features_per_sku(data_train, data_items, n_workers=100):
     df_all['date'] = pd.to_datetime(df_all['date'])
     df_all = df_all.sort_values(['sku', 'date']).reset_index(drop=True)
     
-    for column in categorical_columns:
-        df_all[column] = df_all[column].astype(str).astype('category')
+    for column in categorical_columns: 
+        df_all[column] = df_all[column].astype(str)
     
     df = df_all   
     df_first_entry = df[df['sku'].diff() != 0]
