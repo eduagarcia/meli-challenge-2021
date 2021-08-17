@@ -53,4 +53,27 @@ def read_numpy(data):
             return pd.read_parquet(data, engine='fastparquet', header=None).to_numpy()
         elif extension == '.npy':
             return np.load(data)
-    raise Exception('invalid data')    
+    raise Exception('invalid data')
+    
+def read_json(data):
+    if isinstance(data, dict):
+        return data.copy()
+    elif isinstance(data, list):
+        return data.copy()
+    elif isinstance(data, np.ndarray):
+        return data.copy()
+    elif isinstance(data, str):
+        extension = os.path.splitext(data)[-1]
+        if extension == '.json':
+            with open(data, 'r') as f:
+                data_loaded = json.load(f)
+            return data_loaded
+        elif extension == '.jl' or extension == '.jsonl':
+            data_loaded = []
+            with open(data, 'r') as f:
+                for line in f:
+                    data_loaded.append(json.loads(line))
+            return data_loaded
+        elif extension == '.npy':
+            return np.load(data)
+    raise Exception('invalid data') 

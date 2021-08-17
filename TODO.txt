@@ -1,4 +1,5 @@
 #TODO: create_raining_data.py - eliminate sum of sold_quantity == 0 from y dataset
 #TODO: test impact of using extracted features on the whole 59 days instead of only 29
+#TODO: create train_data_x with series size <30 that are not in y
 
 #PS: fucked fetuares v1 - all series are sold_series...
