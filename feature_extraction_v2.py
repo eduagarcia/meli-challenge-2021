@@ -366,7 +366,7 @@ def extract_features_per_sku(data_train, data_items, n_workers=100):
         df_features_v2[feature] = df_features_v2[feature].cat.set_categories(features_metadata['train']['features'][feature_base]['categories'])
     
     for feature in string_features:
-        df_sku[feature] = df_sku[feature].astype(str)
+        df_features_v2[feature] = df_features_v2[feature].astype(str)
         
     for feature in date_features:
         df_features_v2[feature] = pd.to_datetime(df_features_v2[feature])
