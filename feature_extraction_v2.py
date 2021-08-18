@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import time
 from multiprocessing import Pool
 
 import numpy as np
@@ -257,15 +258,19 @@ def create_features_per_item_domain_id(df):
     return new_row
 
 def extract_features_per_sku(data_train, data_items, n_workers=100):
+    start_time = time.time()
     df_train = read_df(data_train)
     df_item = read_df(data_items)
     
     df_all = df_train.merge(df_item, on='sku')
     df_all['date'] = pd.to_datetime(df_all['date'])
-    df_all = df_all.sort_values(['sku', 'date']).reset_index(drop=True)
     
     for column in categorical_columns: 
         df_all[column] = df_all[column].astype(str)
+        
+    df_all = df_all.sort_values(['item_domain_id', 'sku', 'date']).reset_index(drop=True)
+    
+    print("preprocess_data: " + str(time.time() - start_time) + " seconds")
     
     df = df_all   
     df_first_entry = df[df['sku'].diff() != 0]
@@ -276,22 +281,46 @@ def extract_features_per_sku(data_train, data_items, n_workers=100):
         sku_split.append(df.iloc[start_index:end_index])
     sku_split.append(df.iloc[end_index:].copy().reset_index(drop=True))
     
+    print("sku_split: " + str(time.time() - start_time) + " seconds")
+    
     sku_data = []
     with Pool(n_workers) as p:
         for data in tqdm(p.imap(create_features_per_sku, sku_split), total=len(sku_split)):
             sku_data.append(data)
             
+    print("sku_processing: " + str(time.time() - start_time) + " seconds")
+            
     df_sku = pd.DataFrame(sku_data)
     
-    item_domain_id_split =[]
-    for item_domain_id in df_sku['item_domain_id'].unique():
-        df = df_all[df_all['item_domain_id'] == item_domain_id]
-        item_domain_id_split.append(df.copy().reset_index(drop=True))
+    df = df_all['item_domain_id'].copy()
+    df = df.astype('category').cat.codes
+    df_first_entry = df[df.diff() != 0]
+    indexes = []
+    for i in range(len(df_first_entry)-1):
+        start_index = df_first_entry.index[i]
+        end_index = df_first_entry.index[i+1]
+        indexes.append((start_index, end_index))
+    
+    del df
+    
+    item_domain_id_split = []
+    for index in indexes:
+        item_domain_id_split.append(df_all.iloc[index[0]:index[1]].copy().reset_index(drop=True))
+    item_domain_id_split.append(df_all.iloc[index[1]:].copy().reset_index(drop=True))
+    
+    print("item_domain_split: " + str(time.time() - start_time) + " seconds")
+    
+    #item_domain_id_split =[]
+    #for item_domain_id in df_sku['item_domain_id'].unique():
+    #    df = df_all[df_all['item_domain_id'] == item_domain_id]
+    #    item_domain_id_split.append(df.copy().reset_index(drop=True))
         
     item_domain_id_data = []
     with Pool(n_workers) as p:
         for data in tqdm(p.imap(create_features_per_item_domain_id, item_domain_id_split), total=len(item_domain_id_split)):
             item_domain_id_data.append(data)
+            
+    print("item_domain_processing: " + str(time.time() - start_time) + " seconds")
             
     df_item_domain = pd.DataFrame(item_domain_id_data)
     
@@ -345,6 +374,7 @@ def extract_features_per_sku(data_train, data_items, n_workers=100):
     for feature in series_features:
         df_features_v2[feature] = df_features_v2[feature].astype(str)
     
+    print("Process fineshed after: " + str(time.time() - start_time) + " seconds")
     return df_features_v2
     
 if __name__ == "__main__":
