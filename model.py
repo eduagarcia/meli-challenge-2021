@@ -17,7 +17,10 @@ class Model():
         'test_fromtrain_data_x_processed': 'test_fromtrain_data_last29_features.parquet',
         'train_data_processed_tsfresh': 'train_data_features_tsfresh.parquet',
         'train_data_x_processed_tsfresh': 'train_data_x_features_tsfresh.parquet',
-        'test_fromtrain_data_x_processed_tsfresh': 'test_fromtrain_data_last29_features_tsfresh.parquet'
+        'test_fromtrain_data_x_processed_tsfresh': 'test_fromtrain_data_last29_features_tsfresh.parquet',
+        'train_data_processedv2': 'train_data_featuresv2.parquet',
+        'train_data_x_processedv2': 'train_data_x_featuresv2.parquet',
+        'test_fromtrain_data_x_processedv2': 'test_fromtrain_data_last29_featuresv2.parquet'
     }
     
     def __init__(self, name, dataset_path):

@@ -12,6 +12,12 @@ from models.xgboost_features_v3_tsfresh import XGBoostFeaturesV3
 from models.xgboost_features_v1_2_30models import XGBoostFeaturesV1_2
 from models.xgboost_features_v3_1_tsfresh_all import XGBoostFeaturesV3_1
 from models.xgboost_features_v3_2_tsfresh_plus_manual import XGBoostFeaturesV3_2
+from models.xgboost_features2_v4 import XGBoostFeaturesV4
+from models.xgboost_features2_v4_1_target_features import XGBoostFeaturesV4_1
+from models.xgboost_features2_v4_2_normalize_features import XGBoostFeaturesV4_2
+from models.xgboost_features2_v4_3_eliminate_features import XGBoostFeaturesV4_3
+from models.xgboost_features2_v4_4_select_3 import XGBoostFeaturesV4_4
+from models.xgboost_features2_v4_5_normalize import XGBoostFeaturesV4_5
 
 models = {
     "uniform": Uniform,
@@ -28,4 +34,10 @@ models = {
     "xgboost_features_v1_2_30models": XGBoostFeaturesV1_2,
     "xgboost_features_v3_1_tsfresh_all": XGBoostFeaturesV3_1,
     "xgboost_features_v3_2_tsfresh_plus_manual": XGBoostFeaturesV3_2,
+    "xgboost_features2_v4": XGBoostFeaturesV4,
+    "xgboost_features2_v4_1_target_features": XGBoostFeaturesV4_1,
+    "xgboost_features2_v4_2_normalize_features": XGBoostFeaturesV4_2,
+    "xgboost_features2_v4_3_eliminate_features": XGBoostFeaturesV4_3,
+    "xgboost_features2_v4_4_select_3": XGBoostFeaturesV4_4,
+    "xgboost_features2_v4_5_normalize": XGBoostFeaturesV4_5,
 }
