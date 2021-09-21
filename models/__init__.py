@@ -18,6 +18,9 @@ from models.xgboost_features2_v4_2_normalize_features import XGBoostFeaturesV4_2
 from models.xgboost_features2_v4_3_eliminate_features import XGBoostFeaturesV4_3
 from models.xgboost_features2_v4_4_select_3 import XGBoostFeaturesV4_4
 from models.xgboost_features2_v4_5_normalize import XGBoostFeaturesV4_5
+from models.xgboost_features2_v4_6_more_target_feature import XGBoostFeaturesV4_6
+from models.lightgbm_v1 import LightGBM_V1
+from models.xgboost_features2_v4_5_1_fix_dup import XGBoostFeaturesV4_5_1
 
 models = {
     "uniform": Uniform,
@@ -40,4 +43,7 @@ models = {
     "xgboost_features2_v4_3_eliminate_features": XGBoostFeaturesV4_3,
     "xgboost_features2_v4_4_select_3": XGBoostFeaturesV4_4,
     "xgboost_features2_v4_5_normalize": XGBoostFeaturesV4_5,
+    "xgboost_features2_v4_6_more_target_feature": XGBoostFeaturesV4_6,
+    "lightgbm_v1": LightGBM_V1,
+    "xgboost_features2_v4_5_1_fix_dup": XGBoostFeaturesV4_5_1,
 }

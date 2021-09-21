@@ -238,7 +238,7 @@ class XGBoostFeaturesV4_3(Model):
         self.model = XGBClassifier(n_estimators=500, max_depth=10, learning_rate=0.02,
                     random_state=0, tree_method='gpu_hist',
                     objective='multi:softprob', num_class=30, use_label_encoder=False,
-                    gpu_id=3)
+                    gpu_id=2)
         self.model.fit(X, y)
     
     def predict(self, df_test):

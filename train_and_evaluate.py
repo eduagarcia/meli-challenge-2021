@@ -46,6 +46,7 @@ def train_and_evaluate(model_name, dataset_indexes, save_result=True):
     date_start = datetime.now()
     all_times = []
     results = []
+    predictions = []
     
     for dataset_index in dataset_indexes:
         time_data = []
@@ -89,13 +90,13 @@ def train_and_evaluate(model_name, dataset_indexes, save_result=True):
 
         logger.info(f"Making predictions on {test_data_filepath}...")
 
-        predictions = strategy.predict(df_test)
+        prediction = strategy.predict(df_test)
 
         time_data.append(time.time() - start_time - sum(time_data))
 
         logger.info("Evaluating...")
 
-        result = strategy.evaluate(predictions, ground_truth)
+        result = strategy.evaluate(prediction, ground_truth)
 
         time_data.append(time.time() - start_time - sum(time_data))
 
@@ -104,6 +105,7 @@ def train_and_evaluate(model_name, dataset_indexes, save_result=True):
         logger.info(f"Took {sum(time_data)} seconds. Time data of model {model_name} on index {str(dataset_index)}: {str(json.dumps(time_data))}")
         
         results.append(result)
+        predictions.append(prediction)
         all_times.append(time_data)
     
     all_times_mean = np.zeros(len(all_times[0]))
@@ -128,6 +130,8 @@ def train_and_evaluate(model_name, dataset_indexes, save_result=True):
     
     if save_result:
         save_results(data)
+        for dataset_index, prediction in zip(dataset_indexes, predictions):
+            np.save(os.path.join('./evaluations', f'{model_name}_{str(dataset_index)}.npy'), predictions)
     
     return data
 

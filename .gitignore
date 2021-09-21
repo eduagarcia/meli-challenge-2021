@@ -1,8 +1,10 @@
 predictions/
 submissions/
+evaluations/
 models/hist/
 models/crude_outputs/
-predict_test_hist
+predict_test_hist/
+lightning_logs/
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,jupyternotebooks,linux,windows,macos,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,jupyternotebooks,linux,windows,macos,visualstudiocode

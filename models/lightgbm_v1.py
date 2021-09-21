@@ -9,9 +9,10 @@ import pandas as pd
 
 from tqdm.auto import tqdm
 from multiprocessing import Pool
+import lightgbm as lgb
 
-from xgboost import XGBClassifier
 from tsfresh.utilities.dataframe_functions import impute
+from sklearn.preprocessing import StandardScaler
 
 from model import Model
 from utils import read_df
@@ -32,20 +33,32 @@ categorical_columns = sku_categorical_columns + item_categorical_columns
 numeric_columns = sku_numeric_columns
 
 def target_stock_features(df):
-    df['target_stock__target_day_by_mean'] = df['target_stock']/df['sold_quantity__mean']
-    df['target_stock__target_day_by_mean__std'] = df['sold_quantity__std']*df['target_stock__target_day_by_mean']/df['sold_quantity__mean']
-    df['target_stock__last_5__target_day_by_mean'] = df['target_stock']/df['sold_quantity__last_5__mean']
-    df['target_stock__last_5__target_day_by_mean__std'] = df['sold_quantity__last_5__std']*df['target_stock__last_5__target_day_by_mean']/df['sold_quantity__last_5__mean']
+    for feature in ['sold_quantity', 'sold_quantity__last_3', 'sold_quantity__last_5']:
+        df[f'target_stock__target_day_by_{feature}__mean'] = df['target_stock']/df[f'{feature}__std']
+        df[f'target_stock__target_day_by_{feature}__std'] = df[f'{feature}__std']*df[f'target_stock__target_day_by_{feature}__mean']/df[f'{feature}__mean']
+        df[f'target_stock__target_day_by_{feature}__var'] = df[f'{feature}__var']*df[f'target_stock__target_day_by_{feature}__mean']/df[f'{feature}__mean']
+        df[f'target_stock__target_day_by_{feature}__sum_is_bigger'] = (df[f'{feature}__sum'] >= df['target_stock']).astype(int)
+        df[f'target_stock__target_day_by_{feature}__min_is_bigger'] = (df[f'{feature}__min'] >= df['target_stock']).astype(int)
+        df[f'target_stock__target_day_by_{feature}__max_is_bigger'] = (df[f'{feature}__max'] >= df['target_stock']).astype(int)
+        #df[f'target_stock__target_day_by_{feature}__first_is_bigger'] = (df[f'{feature}__first'] >= df['target_stock']).astype(int)
+        #df[f'target_stock__target_day_by_{feature}__last_is_bigger'] = (df[f'{feature}__last'] >= df['target_stock']).astype(int)
     
-    df['target_stock__by_item_domain_id__target_day_by_mean'] = df['target_stock']/df['sold_quantity__by_item_domain_id__mean']
-    df['target_stock__by_item_domain_id__target_day_by_mean__std'] = df['sold_quantity__by_item_domain_id__std']*df['target_stock__by_item_domain_id__target_day_by_mean']/df['sold_quantity__by_item_domain_id__mean']
+    for feature in ['sold_quantity']:
+        df[f'target_stock__target_day_by_{feature}__first_is_bigger'] = (df[f'{feature}__first'] >= df['target_stock']).astype(int)
+        df[f'target_stock__target_day_by_{feature}__last_is_bigger'] = (df[f'{feature}__last'] >= df['target_stock']).astype(int)
+    
+    for subfeature in ['', '__last_3', '__last_5']:
+        df[f'target_stock__target_day_by_sold_quantity{subfeature}__mean__fixed_by_minute'] =  df[f'target_stock__target_day_by_sold_quantity{subfeature}__mean']*(df[f'minutes_active{subfeature}__mean']/1440)
+        
+    #df['target_stock__by_item_domain_id__target_day_by_mean'] = df['target_stock']/df['sold_quantity__by_item_domain_id__mean']
+    #df['target_stock__by_item_domain_id__target_day_by_mean__std'] = df['sold_quantity__by_item_domain_id__std']*df['target_stock__by_item_domain_id__target_day_by_mean']/df['sold_quantity__by_item_domain_id__mean']
     
     #df.replace([np.inf, -np.inf], np.nan, inplace=True)
     for feature in df.columns:
         if feature.startswith('target_stock__'):
-            df[feature] = impute(df[[feature]])[feature]
+            df[feature] = impute(df[[feature]].copy())[feature]#/30
             
-def weak_normalize(df, normalize_positional=True, one_hot_categorical=False, one_hot_positional=False):
+def normalize(df, scaler=None, normalize_positional=True, one_hot_categorical=False, one_hot_positional=False):
     categories_to_eliminate = ['item_domain_id', 'item_id', 'product_id', 'product_family_id']
     counting_to_eliminate = ['count']
     positional_to_eliminate = ['date__last_month', 'date__first_month', 'date__diff', 'date__last_weekofmonth', 'date__last_day', 'date__last_dayofweek']
@@ -59,9 +72,12 @@ def weak_normalize(df, normalize_positional=True, one_hot_categorical=False, one
     string_features = []
     series_features = []
     id_features = []
+    target_stock_features = []
     for feature in df.columns:
         feature_components = feature.split('__')
-        if ('with' in feature_components[-1]) or ('location' in feature_components[-1]):
+        if feature_components[-1] == 'target_stock':
+            target_stock_features.append(feature)
+        elif ('with' in feature_components[-1]) or ('location' in feature_components[-1]):
             positional_features.append(feature)
         elif ('count' in feature_components[-1]):
             counting_features.append(feature)
@@ -85,12 +101,12 @@ def weak_normalize(df, normalize_positional=True, one_hot_categorical=False, one
     categorical_features_tmp = []
     positional_features_tmp = []
     counting_features_tmp = []
-    target_stock_features = ['target_stock']
+    #target_stock_features = ['target_stock']
     
-    for feature in df.columns:
-        if feature.startswith('target_stock__'):
-            df[feature] = df[feature]/30
-            target_stock_features.append(feature)
+    #for feature in df.columns:
+    #    if feature.startswith('target_stock__'):
+    #        #df[feature] = df[feature]/30
+    #        target_stock_features.append(feature)
     
     for feature in categorical_features:
         feature_components = feature.split('__')
@@ -160,14 +176,23 @@ def weak_normalize(df, normalize_positional=True, one_hot_categorical=False, one
                 df[feature] = df[feature].fillna(0)
             elif 'last' in feature_components[-2]:
                 numeric_features_tmp.append(feature)
+            elif 'sold_quantity' in feature_components[0]:
+                numeric_features_tmp.append(feature)
         else:
             numeric_features_tmp.append(feature)
-            
+    
+    to_norm_features = numeric_features_tmp + target_stock_features
+    if scaler is None:
+        scaler = StandardScaler()
+        scaler.fit(df[to_norm_features])
+        
+    df[to_norm_features] = scaler.transform(df[to_norm_features])
+        
     features = numeric_features_tmp + categorical_features_tmp + positional_features_tmp + counting_features_tmp + target_stock_features
-    return df[features]
+    return df[features], scaler
 
-class XGBoostFeaturesV4_2(Model):
-    model_name = 'xgboost_features2_v4_2_normalize_features'
+class LightGBM_V1(Model):
+    model_name = 'lightgbm_v1'
     
     def __init__(self, dataset_path):
         Model.__init__(self, self.model_name, dataset_path)
@@ -178,11 +203,52 @@ class XGBoostFeaturesV4_2(Model):
         
         x_df = df_train_x_featuresv2.set_index('sku').sample(frac=1, random_state=42).copy()
         y_df = df_train_y_features.set_index('sku').loc[x_df.index].copy()
+        
+        features = []
+        for feature in x_df.columns:
+            if 'by_item_domain_id' in feature:
+                continue
+            if 'by_dayofthemonth' in feature or 'by_dayoftheweek' in feature or 'by_weekofthemonth' in feature:
+                continue
+            else:
+                features.append(feature)
+                
+        numeric_features = []
+        categorical_features = []
+        positional_features = []
+        counting_features = []
+        date_features = []
+        string_features = []
+        series_features = []
+        id_features = []
+        for feature in x_df.columns:
+            feature_components = feature.split('__')
+            if ('with' in feature_components[-1]) or ('location' in feature_components[-1]):
+                positional_features.append(feature)
+            elif ('count' in feature_components[-1]):
+                counting_features.append(feature)
+            elif feature_components[-1] == 'series':
+                series_features.append(feature)
+            elif feature_components[0] in categorical_columns:
+                categorical_features.append(feature)
+            elif feature_components[0] == 'date':
+                if feature == 'date__first' or feature == 'date__last':
+                    date_features.append(feature)
+                else:
+                    positional_features.append(feature)
+            elif feature_components[0] in string_columns:
+                string_features.append(feature)
+            elif feature_components[0] == id_column:
+                id_features.append(feature)
+            else:
+                numeric_features.append(feature)
+                
+        x_df = x_df[features].copy()
           
         y_sold_quantity_series = np.array(list(y_df['sold_quantity_series'].apply(json.loads).values))
         y_cumsum = y_sold_quantity_series.cumsum(axis=1)
 
-        SELECT_N = 1
+        SELECT_N = 3
 
         index_list = []
         y_ts = []
@@ -213,33 +279,56 @@ class XGBoostFeaturesV4_2(Model):
         x_df_train = x_df.loc[index_list].copy()
         x_df_train['target_stock'] = y_ts
         target_stock_features(x_df_train)
-        x_df_train = weak_normalize(x_df_train)
+        x_df_train, scaler = normalize(x_df_train)
         
-        print('Total features eliminated:', len(x_df.columns)-len(x_df_train.columns))
+        print('Total features eliminated:', len(df_train_x_featuresv2.columns)-len(x_df_train.columns))
         
         X = x_df_train.values
         
-        self.prepared_dataset = (X, y)
+        self.prepared_dataset = (x_df_train, y)
+        self.features = features
+        self.scaler = scaler
+        self.feature_name = list(x_df_train.columns)
+        print(self.feature_name)
+        self.filtered_categorical = list(set(categorical_features).intersection(x_df_train.columns))
         
     def train(self):
         X, y = self.prepared_dataset
-        self.model = XGBClassifier(n_estimators=500, max_depth=10, learning_rate=0.02,
-                    random_state=0, tree_method='gpu_hist',
-                    objective='multi:softprob', num_class=30, use_label_encoder=False,
-                    gpu_id=1)
-        self.model.fit(X, y)
+        train_data = lgb.Dataset(X, label=y, feature_name=self.feature_name, categorical_feature=self.filtered_categorical)
+        
+        param = {
+            'num_leaves': 100,
+            'max_depth': 10,
+            'learning_rate': 0.1,
+            'n_estimators': 500,
+            'objective': 'softmax',
+            'n_jobs': 64,
+            'num_class': 30,
+            #'device_type': 'cuda',
+            #'gpu_device_id': 3,
+            #'gpu_use_dp': True,
+            #'is_enable_sparse': False,
+            #'max_bin': 67
+        }
+        param['metric'] = ['multi_logloss']
+        
+        num_boost_round = 5000
+        self.model = lgb.train(param, train_data, num_boost_round)
     
     def predict(self, df_test):
         df_test = read_df(df_test)
         df_train_featuresv2 = read_df(os.path.join(self.dataset_path, self.default_paths['train_data_processedv2']))
         
-        x_test_df_all = df_train_featuresv2.set_index('sku').loc[df_test['sku']].copy()
+        x_test_df_all = df_train_featuresv2.set_index('sku').loc[df_test['sku']]
+        x_test_df_all = x_test_df_all[self.features].copy()
+        
         x_test_df_all['target_stock'] = df_test.set_index('sku')['target_stock']
+        
         target_stock_features(x_test_df_all)
-        x_test_df_all = weak_normalize(x_test_df_all)
+        x_test_df_all, scaler = normalize(x_test_df_all, scaler=self.scaler)
         X_test = x_test_df_all.values
         
-        preds = self.model.predict_proba(X_test)
+        preds = self.model.predict(X_test)
         probabilities = (preds/preds.sum(axis=1)[:,None]).round(4)
         
         return probabilities

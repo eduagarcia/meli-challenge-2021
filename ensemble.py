@@ -9,7 +9,7 @@ import pandas as pd
 import hashlib
 import gzip
 
-from models import models
+#from models import models
 from utils import read_df, read_numpy
 import logging
 
@@ -38,20 +38,23 @@ def generate_file_sha256(filepath, blocksize=2**20):
             m.update(buf)
     return m.hexdigest()
 
-def ensemble(model_names, save_result=True):
+def ensemble(model_names, weights=None, save_result=True):
     data = []
+    if weights is None:
+        weights = [1]*len(model_names)
+    total = sum(weights)
     
     for model_name in model_names:
         data.append(read_numpy(os.path.join('./predictions', f'{model_name}.csv')))
         
     result = np.zeros(data[0].shape)
-    for submission in data:
-        result += submission
-    result = result/len(model_names)
+    for i, submission in enumerate(data):
+        result += submission * (weights[i]/total)
+    #result = result/len(model_names)
 
     predictions = (result / result.sum(axis=1)[:,None]).round(4)
     
-    filename = "_".join(model_names) + "_mean"
+    filename = "_".join(model_names) + "_weighted_" + "_".join([str(w) for w in weights]) 
     
     if not os.path.exists('predictions/ensemble'):
         os.makedirs('predictions/ensemble')
@@ -91,5 +94,17 @@ def ensemble(model_names, save_result=True):
     return data
 
 if __name__ == "__main__":
-    model_names = sys.argv[1:]
-    ensemble(model_names)
+    #model_names = sys.argv[1:]
+    
+    model_weights = {'xgboost_features2_v4_5_normalize': 7,
+                     'xgboost_features2_v4_3_eliminate_features': 3,
+                     'xgboost_features2_v4_4_select_3': 5,
+                     'xgboost_features2_v4_6_more_target_feature': 1,
+                     'xgboost_features2_v4_2_normalize_features': 5}
+    model_names = list(model_weights.keys())
+    weights = list(model_weights.values())
+    
+    print(model_names)
+    print(weights)
+    
+    ensemble(model_names, weights=weights)
