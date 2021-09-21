@@ -16,7 +16,7 @@ pip install -r requirements.txt
 ./download_dataset.sh
 
 #Prepare the training data files and extract features from each time series:
-./prepare_dataset.sh
+./prepare_dataset.sh ./dataset
 
 #Select a model from the ./models folder to train and generate the submission file.
 # e.g.:
